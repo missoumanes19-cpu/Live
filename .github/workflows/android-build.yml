@@ -21,7 +21,7 @@ jobs:
       HAS_KEYSTORE: ${{ secrets.KEYSTORE_BASE64 != '' }}
     defaults:
       run:
-        working-directory: Live-TV-Streaming-Platform-main
+        working-directory: iptv
 
     steps:
       - name: Checkout repository
