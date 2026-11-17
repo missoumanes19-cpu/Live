@@ -1,0 +1,11 @@
+{
+  "status": "active",
+  "xtream_servers": [
+    {
+      "server_name": "Main Server",
+      "host": "http://example-iptv.com:8080",
+      "username": "user1234",
+      "password": "password1234"
+    }
+  ]
+}
