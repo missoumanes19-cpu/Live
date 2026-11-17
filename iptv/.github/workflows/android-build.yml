@@ -40,22 +40,22 @@ jobs:
           M=android/app/src/main/AndroidManifest.xml
           grep -q 'permission.INTERNET' $M || sed -i 's|<application|<uses-permission android:name="android.permission.INTERNET"/>\n    <application android:usesCleartextTraffic="true"|' $M
 
-      - name: Force compileSdk 36 for all plugins
+      - name: Gradle init script - force compileSdk 36
+        working-directory: .
         run: |
-          F=android/build.gradle.kts
-          cat > /tmp/patch.kts <<'EOF'
-          subprojects {
-              fun fixSdk() {
-                  extensions.findByName("android")?.withGroovyBuilder {
-                      "compileSdkVersion"(36)
+          mkdir -p ~/.gradle/init.d
+          cat > ~/.gradle/init.d/force-sdk.gradle <<'EOF'
+          allprojects {
+              afterEvaluate { p ->
+                  def a = p.extensions.findByName('android')
+                  if (a != null) {
+                      try { a.compileSdk = 36 } catch (Throwable t) { a.compileSdkVersion(36) }
+                      println "compileSdk forced to 36 for ${p.name}"
                   }
               }
-              if (state.executed) fixSdk() else afterEvaluate { fixSdk() }
           }
-
           EOF
-          cat /tmp/patch.kts $F > /tmp/new.kts && mv /tmp/new.kts $F
-          head -20 $F
+          cat ~/.gradle/init.d/force-sdk.gradle
 
       - name: Get dependencies
         run: flutter pub get
