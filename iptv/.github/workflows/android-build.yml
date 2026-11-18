@@ -40,25 +40,21 @@ jobs:
           M=android/app/src/main/AndroidManifest.xml
           grep -q 'permission.INTERNET' $M || sed -i 's|<application|<uses-permission android:name="android.permission.INTERNET"/>\n    <application android:usesCleartextTraffic="true"|' $M
 
-      - name: Gradle init script - force compileSdk 36
-        working-directory: .
-        run: |
-          mkdir -p ~/.gradle/init.d
-          cat > ~/.gradle/init.d/force-sdk.gradle <<'EOF'
-          allprojects {
-              afterEvaluate { p ->
-                  def a = p.extensions.findByName('android')
-                  if (a != null) {
-                      try { a.compileSdk = 36 } catch (Throwable t) { a.compileSdkVersion(36) }
-                      println "compileSdk forced to 36 for ${p.name}"
-                  }
-              }
-          }
-          EOF
-          cat ~/.gradle/init.d/force-sdk.gradle
-
       - name: Get dependencies
         run: flutter pub get
+
+      - name: Patch plugins to compileSdk 36
+        run: |
+          PC="${PUB_CACHE:-$HOME/.pub-cache}"
+          echo "Pub cache: $PC"
+          find "$PC/hosted" -path "*/android/build.gradle*" -type f | while read f; do
+            if grep -Eq 'compileSdk(Version)?[ =(]+(2[0-9]|3[0-5])\b' "$f"; then
+              sed -i -E 's/(compileSdk(Version)?[ =(]+)(2[0-9]|3[0-5])\b/\136/' "$f"
+              echo "PATCHED: $f"
+            fi
+          done
+          echo "--- file_picker check ---"
+          grep -rn "compileSdk" "$PC"/hosted/*/file_picker-*/android/build.gradle* || true
 
       - name: Build release APK
         run: flutter build apk --release
