@@ -3,9 +3,9 @@
   "xtream_servers": [
     {
       "server_name": "Main Server",
-      "host": "http://example-iptv.com:8080",
-      "username": "user1234",
-      "password": "password1234"
+      "host": "http://live.8kultra.org:80",
+      "username": "anasait",
+      "password": "c9CNA6j"
     }
   ]
 }
