@@ -1,13 +1,21 @@
 {
   "status": "active",
   "server_name": "ANES TV",
+  "message": "",
+  "maintenance": false,
+  "min_version": "",
+  "update_url": "",
+  "epg_url": "",
   "xtream_servers": [
     {
       "server_name": "Server 1",
       "host": "http://your-server.com:8080",
       "username": "YOUR_USERNAME",
       "password": "YOUR_PASSWORD"
+    },
+    {
+      "server_name": "Server 2 (M3U)",
+      "m3u_url": "https://example.com/playlist.m3u"
     }
-  ],
-  "m3u_url": ""
+  ]
 }
