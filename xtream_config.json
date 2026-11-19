@@ -1,0 +1,13 @@
+{
+  "status": "active",
+  "server_name": "ANES TV",
+  "xtream_servers": [
+    {
+      "server_name": "Server 1",
+      "host": "http://your-server.com:8080",
+      "username": "YOUR_USERNAME",
+      "password": "YOUR_PASSWORD"
+    }
+  ],
+  "m3u_url": ""
+}
