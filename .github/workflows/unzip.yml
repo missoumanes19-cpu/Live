@@ -10,18 +10,33 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: write
+      actions: write
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
 
       - name: Extract zip
+        id: extract
         run: |
-          unzip -o project.zip
+          if [ ! -f project.zip ]; then
+            echo "No project.zip - nothing to do"
+            echo "done=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          unzip -o project.zip -x ".github/*" "__MACOSX/*"
           rm project.zip
+          echo "done=true" >> "$GITHUB_OUTPUT"
 
       - name: Commit extracted files
+        if: steps.extract.outputs.done == 'true'
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add -A
           git diff --staged --quiet || (git commit -m "Extract project files automatically" && git push)
+
+      - name: Start APK build
+        if: steps.extract.outputs.done == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh workflow run android-build.yml --ref main
