@@ -1,0 +1,69 @@
+name: Unzip Project
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+    paths:
+      - project.zip
+
+permissions:
+  contents: write
+  actions: write
+
+jobs:
+  unzip:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Check ZIP
+        id: check
+        run: |
+          if [ ! -f project.zip ]; then
+            echo "No project.zip found"
+            echo "done=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          unzip -tq project.zip
+          echo "done=true" >> "$GITHUB_OUTPUT"
+
+      - name: Extract project
+        if: steps.check.outputs.done == 'true'
+        run: |
+          rm -rf iptv
+          unzip -oq project.zip -d .
+          rm -rf __MACOSX
+          rm -f project.zip
+
+      - name: Install build workflow
+        if: steps.check.outputs.done == 'true'
+        run: |
+          mkdir -p .github/workflows
+          if [ -f iptv/.github/workflows/build_apk.yml ]; then
+            cp iptv/.github/workflows/build_apk.yml .github/workflows/build_apk.yml
+          else
+            echo "ERROR: iptv/.github/workflows/build_apk.yml not found"
+            exit 1
+          fi
+
+      - name: Commit extracted project
+        if: steps.check.outputs.done == 'true'
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          if ! git diff --staged --quiet; then
+            git commit -m "Extract project files automatically [skip ci]"
+            git push
+          fi
+
+      - name: Start APK build
+        if: steps.check.outputs.done == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh workflow run build_apk.yml --ref main
