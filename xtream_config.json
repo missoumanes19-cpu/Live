@@ -14,6 +14,12 @@
       "password": "12044113915879"
     },
     {
+      "server_name": "Server 1",
+      "host": "http://1serverx.com:80",
+      "username": "5805374028",
+      "password": "6379557343"
+    },
+    {
       "server_name": "Server 2 (M3U)",
       "m3u_url": "https://example.com/playlist.m3u"
     }
