@@ -20,8 +20,8 @@
       "password": "ctwjZE3"
     },
     {
-      "server_name": "Server 2 (M3U)",
-      "m3u_url": "https://example.com/playlist.m3u"
+      "server_name": "mi 2 (M3U)",
+      "m3u_url": "http://www.mitvpro.online:25461/get.php?username=02026324217511&password=esjB5vcsIahF0bh&type=m3u_plus"
     }
   ]
 }
