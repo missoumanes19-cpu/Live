@@ -1,0 +1,59 @@
+name: ANES TV Android APK
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'iptv/**'
+      - '.github/workflows/build_apk.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build-apk:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: iptv
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+
+      - name: Ensure Android platform files exist
+        run: |
+          if [ ! -d android ]; then
+            flutter create --platforms=android --project-name anes_tv --org com.anes.tv .
+          fi
+
+      - name: Patch Android manifest (INTERNET, http streams, TV, icons)
+        run: python3 tool/patch_android.py
+
+      - name: Get dependencies
+        run: flutter pub get
+
+      - name: Build release APK with embedded GitHub config URL
+        run: >-
+          flutter build apk --release --split-per-abi
+          --dart-define=CONFIG_URL=https://raw.githubusercontent.com/${{ github.repository }}/${{ github.ref_name }}/xtream_config.json
+
+      - name: Upload APKs
+        uses: actions/upload-artifact@v4
+        with:
+          name: ANES-TV-release-apk
+          path: iptv/build/app/outputs/flutter-apk/*.apk
+          if-no-files-found: error
+          retention-days: 7
