@@ -8,10 +8,10 @@
   "epg_url": "",
   "xtream_servers": [
     {
-      "server_name": "top tv ",
+      "server_name": "1 ",
       "host": "http://1serverx.com:80",
-      "username": "3448580271",
-      "password": "6032339594"
+      "username": "9513574182",
+      "password": "6246143104"
     },
     {
       "server_name": "2",
@@ -20,7 +20,7 @@
       "password": "ctwjZE3"
     },
     {
-      "server_name": "3 (M3U)",
+      "server_name": "3",
       "m3u_url": "http://www.mitvpro.online:25461/get.php?username=02026324217511&password=esjB5vcsIahF0bh&type=m3u_plus"
     }
   ]
