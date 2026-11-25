@@ -1,0 +1,111 @@
+name: Unzip Project
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - project.zip
+
+permissions:
+  contents: write
+  actions: write
+
+jobs:
+  unzip:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Validate ZIP
+        run: |
+          python3 - <<'PY'
+          import sys, zipfile
+          path = 'project.zip'
+          try:
+              with zipfile.ZipFile(path) as z:
+                  bad = z.testzip()
+                  if bad:
+                      print(f'ZIP CRC failure in: {bad}')
+                      sys.exit(1)
+          except FileNotFoundError:
+              print('project.zip not found')
+              sys.exit(1)
+          except zipfile.BadZipFile as e:
+              print(f'Invalid ZIP: {e}')
+              sys.exit(1)
+          print('ZIP validation passed')
+          PY
+
+      - name: Extract project files
+        run: |
+          python3 - <<'PY'
+          import pathlib, shutil, sys, zipfile
+
+          with zipfile.ZipFile('project.zip') as z:
+              names = z.namelist()
+              z.extractall('_extract')
+
+          root = pathlib.Path('_extract')
+          shutil.rmtree(root / '__MACOSX', ignore_errors=True)
+
+          # نبحث عن pubspec.yaml أياً كان ترتيب الـ ZIP:
+          #   iptv/pubspec.yaml                  (مجلد iptv في الجذر)
+          #   Live-main/iptv/pubspec.yaml        (زر Download ZIP من GitHub)
+          #   iptv/ هو المجلد الأعلى نفسه        (ZIP لمجلد iptv وحده)
+          #   pubspec.yaml مباشرة في الجذر       (ZIP لمحتويات iptv)
+          ignore = {'build', '.dart_tool', 'node_modules'}
+          pubs = sorted(
+              (p for p in root.rglob('pubspec.yaml')
+               if not ignore & set(p.relative_to(root).parts)),
+              key=lambda p: len(p.relative_to(root).parts))
+
+          if not pubs:
+              print('ERROR: no pubspec.yaml found in project.zip. First entries:')
+              for n in names[:40]:
+                  print('  ', n)
+              sys.exit(1)
+
+          iptv_dir = next((p.parent for p in pubs if p.parent.name == 'iptv'), None)
+          if iptv_dir is not None:
+              src, dest = iptv_dir.parent, pathlib.Path('.')   # المجلد الذي يحوي iptv/ يصبح جذر المستودع
+          else:
+              src, dest = pubs[0].parent, pathlib.Path('iptv')  # محتويات المشروع نفسها تذهب إلى iptv/
+          print(f'Detected project folder: {src.relative_to(root)} -> {dest}')
+
+          # لا ننسخ .github: GITHUB_TOKEN لا يملك صلاحية تعديل ملفات workflows
+          # (الدفع يُرفض بخطأ "without workflows permission"). عدّل .github/workflows يدوياً.
+          for p in src.rglob('*'):
+              rel = p.relative_to(src)
+              if rel.parts[0] in ('.git', '.github'):
+                  continue
+              target = dest / rel
+              if p.is_dir():
+                  target.mkdir(parents=True, exist_ok=True)
+              else:
+                  target.parent.mkdir(parents=True, exist_ok=True)
+                  shutil.copy2(p, target)
+
+          shutil.rmtree(root)
+          pathlib.Path('project.zip').unlink()
+          if not pathlib.Path('iptv/pubspec.yaml').is_file():
+              print('ERROR: iptv/pubspec.yaml was not created')
+              sys.exit(1)
+          print('Project extracted')
+          PY
+
+      - name: Commit extracted project
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          if ! git diff --staged --quiet; then
+            git commit -m "Extract project files automatically [skip ci]"
+            git push
+          fi
+
+      - name: Start APK build workflow
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh workflow run build_apk.yml --ref main
