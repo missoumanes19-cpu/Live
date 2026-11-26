@@ -18,7 +18,18 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
+      - name: Check project.zip
+        id: chk
+        run: |
+          if [ -f project.zip ]; then
+            echo "exists=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "exists=false" >> "$GITHUB_OUTPUT"
+            echo "::warning::project.zip غير موجود في جذر المستودع - تم تخطي الاستخراج (ارفع الملف باسم project.zip ليبدأ الاستخراج)"
+          fi
+
       - name: Validate ZIP
+        if: steps.chk.outputs.exists == 'true'
         run: |
           python3 - <<'PY'
           import sys, zipfile
@@ -39,6 +50,7 @@ jobs:
           PY
 
       - name: Extract project files
+        if: steps.chk.outputs.exists == 'true'
         run: |
           python3 - <<'PY'
           import pathlib, shutil, sys, zipfile
@@ -96,6 +108,7 @@ jobs:
           PY
 
       - name: Commit extracted project
+        if: steps.chk.outputs.exists == 'true'
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
