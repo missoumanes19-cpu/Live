@@ -14,14 +14,17 @@
       "password": "9080813735"
     },
     {
-      "server_name": "1",
+      "server_name": "2",
       "host": "http://getmyliontv.com:80",
       "username": "qWtBp8fA",
       "password": "ctwjZE3"
     },
     {
+   
       "server_name": "3",
-      "m3u_url": "http://www.mitvpro.online:25461/get.php?username=02026324217511&password=esjB5vcsIahF0bh&type=m3u_plus"
+      "host": "http://bhost1.online:8880",
+      "username": "327755137747",
+      "password": "306952478915""
     }
   ]
 }
